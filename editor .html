@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🛠️ এডিটর প্যানেল</title>
+<link href="https://fonts.googleapis.com/css2?family=Galada&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Hind Siliguri',sans-serif; color:#5c4450;
+  background:linear-gradient(165deg,#fff6fa,#ffe6f0 55%,#fdd8e8); min-height:100vh; padding:16px 14px 110px;}
+.wrap{max-width:560px; margin:0 auto; display:flex; flex-direction:column; gap:16px;}
+h1{font-family:'Galada'; font-weight:400; font-size:30px; text-align:center;}
+.sub{text-align:center; font-size:13.5px; color:#8a6b78; margin-top:-8px;}
+.reset{display:block; margin:6px auto 0; background:none; border:none; color:#b25f7f;
+  font-family:'Hind Siliguri'; font-size:13px; text-decoration:underline; cursor:pointer;}
+.card{background:rgba(255,255,255,.72); border:1px solid rgba(255,255,255,.85);
+  border-radius:18px; padding:16px; box-shadow:0 8px 24px rgba(190,120,145,.15);}
+.card h2{font-family:'Galada'; font-weight:400; font-size:20px; margin-bottom:12px; color:#8a5d70;}
+label{display:block; font-size:13.5px; color:#8a6b78; margin:10px 0 4px;}
+input,textarea,select{width:100%; padding:10px 12px; border-radius:12px;
+  border:1px solid #f0cfdd; background:#fff; font-family:'Hind Siliguri';
+  font-size:15px; color:#5c4450; outline:none;}
+textarea{resize:vertical; min-height:80px;}
+input:focus,textarea:focus,select:focus{border-color:#f78fb5;}
+.row{display:flex; gap:8px;}
+.row > div{flex:1;}
+.item{border:1px dashed #e8bcd0; border-radius:14px; padding:10px; margin-top:10px; position:relative;}
+.item .del{position:absolute; top:8px; right:8px; width:30px; height:30px; border-radius:50%;
+  border:none; background:#ffd9e8; color:#b25f7f; font-size:15px; cursor:pointer;}
+.add{margin-top:10px; width:100%; padding:11px; border-radius:14px; border:1px dashed #f78fb5;
+  background:transparent; color:#b25f7f; font-family:'Hind Siliguri'; font-size:15px; cursor:pointer;}
+.cakes{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;}
+.cakes label{display:flex; align-items:center; gap:5px; margin:0; font-size:13px;
+  padding:8px 12px; border-radius:12px; border:1px solid #f0cfdd; background:#fff; cursor:pointer;}
+.cakes input{width:auto;}
+.filebtn{display:block; margin-top:6px; padding:8px 12px; border-radius:10px; border:1px dashed #b25f7f;
+  background:#fff0f5; color:#b25f7f; font-family:'Hind Siliguri'; font-size:13.5px; cursor:pointer; text-align:center;}
+.fv{font-size:12px; color:#7a9d6f; margin-top:4px;}
+#btnBar{position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
+  display:flex; gap:8px; z-index:50; max-width:94vw;}
+#btnBar button{padding:14px 16px; border:none; border-radius:24px; cursor:pointer;
+  font-family:'Hind Siliguri'; font-size:15px; font-weight:600;
+  box-shadow:0 10px 26px rgba(240,120,160,.5);}
+#prevBtn{background:linear-gradient(135deg,#b8e6c9,#57a773); color:#fff;}
+#makeBtn{background:linear-gradient(135deg,#ffb7d3,#f78fb5); color:#fff;}
+#dlBtn{background:linear-gradient(135deg,#c9b8ff,#8a76d8); color:#fff;}
+#result{display:none;}
+#linkBox{font-size:12px; word-break:break-all; background:#fff; padding:10px;
+  border-radius:10px; border:1px solid #f0cfdd; max-height:110px; overflow-y:auto;}
+.rb{display:flex; gap:8px; margin-top:10px;}
+.rb button{flex:1; padding:11px; border:none; border-radius:12px; cursor:pointer;
+  font-family:'Hind Siliguri'; font-size:14.5px; font-weight:600;}
+#copyBtn{background:linear-gradient(135deg,#ffb7d3,#f78fb5); color:#fff;}
+#waBtn{background:#128c7e; color:#fff;}
+.hintline{font-size:12.5px; color:#8a6b78; margin-top:8px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🛠️ এডিটর প্যানেল</h1>
+  <p class="sub">সব লেখা ওয়েবসাইটের ডিফল্ট — যা খুশি বদলাও → রিভিউ → লিংক/ফাইল</p>
+  <button class="reset" id="resetBtn">↺ সব ডিফল্টে ফিরে যাও</button>
+
+  <div class="card">
+    <h2>১. বেসিক</h2>
+    <div class="row">
+      <div><label>তার নাম</label><input id="f_herName"></div>
+      <div><label>তোমার নাম</label><input id="f_yourName"></div>
+    </div>
+    <div class="row">
+      <div><label>সম্পর্ক শুরু (YYYY-MM-DD)</label><input id="f_rel"></div>
+      <div><label>জন্মদিন (ঐচ্ছিক)</label><input id="f_bday" placeholder="2026-09-12T00:00"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>২. দরজা</h2>
+    <label>প্রশ্ন</label><input id="f_q">
+    <label>উত্তর (কমা দিয়ে একাধিক)</label><input id="f_ans">
+    <label>হিন্ট</label><input id="f_hint">
+    <label>ভুল উত্তরের লাইন (প্রতি লাইনে একটা)</label><textarea id="f_wrong" rows="3"></textarea>
+  </div>
+
+  <div class="card">
+    <h2>৩. মূল চিঠি</h2>
+    <label>শিরোনাম</label><input id="f_ltitle">
+    <label>চিঠি</label><textarea id="f_letter" rows="9"></textarea>
+    <label>ভয়েস (লিংক বা ফাইল — চিঠির নিচে বসবে)</label>
+    <input id="f_voice" placeholder="https://...mp3">
+    <label class="filebtn" for="fileVoice">📁 অথবা ফোন থেকে ভয়েস বাছাই করো</label>
+    <input type="file" id="fileVoice" accept="audio/*" class="hidden" style="display:none">
+    <div class="fv" id="fvVoice"></div>
+  </div>
+
+  <div class="card">
+    <h2>৪. কার্ড (প্রশংসা)</h2>
+    <div id="cardList"></div>
+    <button class="add" id="addCard">➕ নতুন কার্ড</button>
+  </div>
+
+  <div class="card">
+    <h2>৫. কেক</h2>
+    <div class="cakes" id="cakeSel">
+      <label><input type="radio" name="cd" value="1">১. হোয়াইট রোজ</label>
+      <label><input type="radio" name="cd" value="2">২. রয়েল হোয়াইট</label>
+      <label><input type="radio" name="cd" value="3">৩. পিংক ব্লাশ</label>
+      <label><input type="radio" name="cd" value="4">৪. ক্রিম গোল্ড</label>
+      <label><input type="radio" name="cd" value="5">৫. রোজ শ্যাডো</label>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div><label>কেকের লেখা</label><input id="f_cmsg"></div>
+      <div><label>মোমবাতি</label><input id="f_candles" type="number" min="1" max="12"></div>
+    </div>
+    <label>ইচ্ছার মেসেজ (মোমবাতি নেভার পর)</label><textarea id="f_wish" rows="3"></textarea>
+  </div>
+
+  <div class="card">
+    <h2>৬. 🤍 স্পেশাল লাভ লেটার (মোমবাতির পর আসে)</h2>
+    <label>ওপরের টিজার</label><input id="f_llT">
+    <label>চিঠির লেখা (প্রতি লাইন আলাদা করে আসবে)</label><textarea id="f_llX" rows="7"></textarea>
+    <label>শেষের স্বাক্ষর</label><input id="f_llS">
+  </div>
+
+  <div class="card">
+    <h2>৭. গান</h2>
+    <div id="songList"></div>
+    <button class="add" id="addSong">➕ নতুন গান</button>
+    <p class="hintline">লিংক বা ফোনের গান দুটোই চলবে। একাধিক দিলে সে নিজে বাছাই করবে</p>
+  </div>
+
+  <div class="card">
+    <h2>৮. গ্যালারি</h2>
+    <div id="galList"></div>
+    <button class="add" id="addGal">➕ নতুন ছবি</button>
+  </div>
+
+  <div class="card">
+    <h2>৯. আকাশের তারা</h2>
+    <label>প্রতি লাইনে একটা মেসেজ</label>
+    <textarea id="f_stars" rows="5"></textarea>
+  </div>
+
+  <div class="card">
+    <h2>১০. চ্যাটবট</h2>
+    <div class="row">
+      <div><label>তোমার প্রোফাইল ছবি</label><input id="f_myPic" placeholder="https://..."></div>
+      <div><label>তার প্রোফাইল ছবি</label><input id="f_herPic" placeholder="https://..."></div>
+    </div>
+    <label>প্রথম মেসেজ (বট নিজে দেবে)</label><input id="f_greet">
+    <p class="hintline">ছবি খালি রাখলে নামের প্রথম অক্ষর দেখাবে</p>
+  </div>
+
+  <div class="card">
+    <h2>১১. শেষ কথা</h2>
+    <label>ফাইনাল মেসেজ</label><textarea id="f_final" rows="4"></textarea>
+  </div>
+
+  <div class="card" id="result">
+    <h2>✅ লিংক তৈরি!</h2>
+    <div id="linkBox"></div>
+    <div class="rb">
+      <button id="copyBtn">📋 কপি</button>
+      <button id="waBtn">💬 WhatsApp</button>
+    </div>
+    <p class="hintline">⚠️ লিংক হোস্ট করার পর সব জায়গায় চলবে। লোকালে "👁️ রিভিউ" ব্যবহার করো। গান/ছবি ফাইল দিয়ে যোগ করলে "📥 ফাইল" বাটনের ফাইলটাই পাঠাও — সব ভেতরে থাকবে।</p>
+  </div>
+</div>
+
+<div id="btnBar">
+  <button id="prevBtn">👁️ রিভিউ</button>
+  <button id="makeBtn">🔗 লিংক</button>
+  <button id="dlBtn">📥 ফাইল</button>
+</div>
+
+<script>
+// @ts-nocheck
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
+
+function utf8ToB64(str){
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function vibrate(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
+
+/* ═══ ওয়েবসাইটের ডিফল্ট লেখা (হুবহু) ═══ */
+const DEF = {
+  herName: 'মিস পাগলি', yourName: 'সাইদ',
+  rel: '2025-03-15', bday: '',
+  q: 'আমি তোমাকে কোন নামে ডাকি?', ans: 'পাগলি, পাগলী, pagli, জান',
+  hint: 'মিষ্টি একটা খুনসুটির নাম, ৩ অক্ষর 🙂',
+  wrong: 'উঁহু! এই দরজা সহজে খোলে না 🙂\nআবার ভেবে দেখো জান...\nপাগলি, ভালো করে ভাবো 🙂',
+  ltitle: 'তোমার জন্য একটা চিঠি',
+  letter: `আমার জান,
+
+তোমাকে অনেক ভালোবাসি, বিশ্বাস করো আমাকে। আমি খারাপ হতে পারি কিন্তু এত খারাপ না যে তোমার সাথে প্রতারণা করবো বা তোমাকে মিথ্যা বলবো।
+
+যেদিন স্ন্যাপচ্যাটে তোমার আইডি দেখে রিকোয়েস্ট পাঠিয়েছিলাম, ভাবতেও পারিনি ওই একটা রিকোয়েস্ট আমার জীবনের সবচেয়ে সুন্দর জিনিসটা এনে দেবে। দেড় বছর হয়ে গেল জান। তোমাকে না দেখেই এতটা ভালোবাসতে পারি — নিজেও জানতাম না।
+
+তুমি চাঁদের থেকেও সুন্দর। তোমার হাসি রংধনুর মত, তোমার মন খারাপ হলে বৃষ্টি হয়।
+
+খাওয়া দাওয়া ঠিকমতো করো, ওষুধ খেয়ো, রাতে তাড়াতাড়ি ঘুমাও। আমি দূরে আছি ঠিকই, কিন্তু সবসময় তোমার পাশে আছি — মনে রেখো, তুমি একা না।`,
+  cmsg: 'Happy Birthday', candles: 6,
+  wish: 'সব মোমবাতি নিভে গেছে... এখন চোখ বন্ধ করে একটা ইচ্ছা করো। আমি জানি, আমার ইচ্ছা তোমার প্রতিটা দিন সুন্দর হোক 🤍',
+  llT: 'একটা জিনিস বাকি আছে এখনো... 🤍',
+  llX: `পাগলি,
+
+আজ তোমার জন্মদিনে এত কিছু বানালাম, অথচ মনে হচ্ছে কিছুই যথেষ্ট না।
+তুমি জানো, দিনের শেষে ঘুমানোর আগে আমি রোজ একবার ভাবি — এই মেয়েটা আমাকে এত ভালোবাসে কী করে?
+আমি তো খুব সাধারণ। তুমিই আমাকে বানিয়ে দাও অসাধারণ।
+
+তোমার হাসিটা যেন রোজ থাকে, চোখে জল আর কোনোদিন না আসে।
+যত দূরেই থাকি, মনে রেখো — এই ছেলেটা তোমার জন্য সব করতে রাজি।`,
+  llS: '— শুধু তোমার, সাইদ 🤍',
+  stars: 'তুমি চাঁদের থেকেও সুন্দর, জান 🤍\nযত তারা আকাশে, তার চেয়েও বেশি ভালোবাসা তোমার জন্য।\nতুমি একা না — সবসময় আমি আছি পাশে।\nতোমার হাসি রংধনুর মত, মন খারাপ হলে বৃষ্টি হয়।\nআমার জীবনের সবচেয়ে সুন্দর আকস্মিক ঘটনা — তুমি 🤍',
+  greet: 'জান, এখানে এসেছ🙂 আমাকে না জানিয়ে?',
+  final: `জান, এই পুরোটা আমি বানিয়েছি শুধু তোমার জন্য।
+তুমি হয়তো আমাকে ছুঁতে পারো না, কিন্তু আমার ভালোবাসাটা তোমাকে রোজ ছুঁয়ে যায়।
+যত দূরেই থাকি, মনে রেখো — আমি আছি। সবসময়।
+তুমি একা না। 🤍`,
+  cards: [
+    {t:'তোমার চোখ 🤍', x:'ওই চোখের কথা কি আমি বলি? ওইখানে আমি হারিয়ে যাই, আর ফিরে আসতেও ইচ্ছে করে না।', f:'glass', a:'word', l:'stack'},
+    {t:'তোমার হাসি 🌸', x:'তোমার হাসি রংধনুর মত, তোমার মন খারাপ হলে বৃষ্টি হয়। তাই হাসি মুখে থাকো, আকাশ ভরে যাক রঙে।', f:'glass', a:'word', l:'stack'},
+    {t:'তোমার যত্ন নেওয়া 🙂', x:'খাওয়া দাওয়া তো ঠিকমতো করো না জান, আমাকে বারবার মনে করাতে হয়। এই ভাবটাই তোমার সবচেয়ে প্রিয় অভ্যাস।', f:'glass', a:'word', l:'stack'}
+  ],
+  gal: [
+    {url:'https://picsum.photos/seed/love1/600/800', caption:'আমাদের প্রথম কথা 🤍'},
+    {url:'https://picsum.photos/seed/love2/600/800', caption:'তোমার সেই হাসি 🙂'},
+    {url:'https://picsum.photos/seed/love3/600/800', caption:'রাত জেগে কথা 😂'},
+    {url:'https://picsum.photos/seed/love4/600/800', caption:'আরও অনেক স্মৃতি আসছে...'}
+  ]
+};
+
+/* ═══ ম্যানেজার ═══ */
+function addCard(data){
+  const item = document.createElement('div');
+  item.className = 'item';
+  item.innerHTML = `
+    <button class="del">✕</button>
+    <label>শিরোনাম</label><input class="c_t" value="${(data&&data.t)||''}">
+    <label>লেখা</label><textarea class="c_x" rows="2">${(data&&data.x)||''}</textarea>
+    <div class="row">
+      <div><label>ফ্রেম</label><select class="c_f">
+        <option value="glass">গ্লাস</option><option value="letter">লেটার</option>
+        <option value="polaroid">পোলারয়েড</option><option value="gold">গোল্ডেন</option>
+        <option value="minimal">মিনিমাল</option></select></div>
+      <div><label>অ্যানিমেশন</label><select class="c_a">
+        <option value="word">শব্দে শব্দে</option><option value="blur">ব্লার→ক্লিয়ার</option>
+        <option value="line">লাইনে লাইনে</option><option value="type">টাইপরাইটার</option></select></div>
+      <div><label>সাইজ</label><select class="c_l">
+        <option value="stack">লম্বা</option><option value="single">বড় একক</option>
+        <option value="square">চারকোনা</option></select></div>
+    </div>`;
+  if (data){ item.querySelector('.c_f').value = data.f||'glass'; item.querySelector('.c_a').value = data.a||'word'; item.querySelector('.c_l').value = data.l||'stack'; }
+  item.querySelector('.del').addEventListener('click', () => item.remove());
+  $('#cardList').appendChild(item);
+}
+function addSong(data){
+  const item = document.createElement('div');
+  item.className = 'item';
+  item.innerHTML = `<button class="del">✕</button>
+    <div class="row"><div><label>গানের নাম</label><input class="s_n" value="${(data&&data.name)||''}"></div></div>
+    <label>লিংক (.mp3)</label><input class="s_u" value="${(data&&data.url && !String(data.url).startsWith('data:')) ? data.url : ''}">
+    <label class="filebtn">📁 বা ফোন থেকে গান বাছাই করো<input type="file" accept="audio/*" class="s_f" style="display:none"></label>
+    <div class="fv s_v">${(data&&data.url && String(data.url).startsWith('data:')) ? '✅ ফাইল লোড আছে' : ''}</div>`;
+  const fu = item.querySelector('.s_f');
+  fu.addEventListener('change', () => handleFile(fu.files[0], item.querySelector('.s_u'), item.querySelector('.s_v')));
+  item.querySelector('.del').addEventListener('click', () => item.remove());
+  if (data && data.url && String(data.url).startsWith('data:')) item.querySelector('.s_u').dataset.file = data.url;
+  $('#songList').appendChild(item);
+}
+function addGal(data){
+  const item = document.createElement('div');
+  item.className = 'item';
+  const isData = data && data.url && String(data.url).startsWith('data:');
+  item.innerHTML = `<button class="del">✕</button>
+    <label>ছবির লিংক</label><input class="g_u" value="${isData ? '' : ((data&&data.url)||'')}">
+    <label class="filebtn">📁 বা ফোন থেকে ছবি বাছাই করো<input type="file" accept="image/*" class="g_f" style="display:none"></label>
+    <div class="fv g_v">${isData ? '✅ ফাইল লোড আছে' : ''}</div>
+    <label>ক্যাপশন</label><input class="g_c" value="${(data&&data.caption)||''}">`;
+  const fu = item.querySelector('.g_f');
+  fu.addEventListener('change', () => handleImage(fu.files[0], item.querySelector('.g_u'), item.querySelector('.g_v')));
+  item.querySelector('.del').addEventListener('click', () => item.remove());
+  if (isData) item.querySelector('.g_u').dataset.file = data.url;
+  $('#galList').appendChild(item);
+}
+
+/* ফাইল হ্যান্ডলিং */
+function handleFile(file, inputEl, viewEl){
+  if (!file) return;
+  if (file.size > 4*1024*1024){ alert('ফাইলটা খুব বড় (৪MB+) — ছোট ফাইল দাও'); return; }
+  const r = new FileReader();
+  r.onload = () => {
+    inputEl.dataset.file = r.result;
+    inputEl.value = '';
+    viewEl.textContent = '✅ ' + file.name + ' (' + (file.size/1024/1024).toFixed(1) + 'MB)';
+  };
+  r.readAsDataURL(file);
+}
+function handleImage(file, inputEl, viewEl){
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      const max = 900;
+      let w = img.width, h = img.height;
+      if (w > max || h > max){ const sc = max / Math.max(w,h); w = Math.round(w*sc); h = Math.round(h*sc); }
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      inputEl.dataset.file = c.toDataURL('image/jpeg', .72);
+      inputEl.value = '';
+      viewEl.textContent = '✅ ' + file.name + ' (ছোট করা হয়েছে)';
+    };
+    img.src = r.result;
+  };
+  r.readAsDataURL(file);
+}
+
+/* ভয়েস ফাইল */
+ $('#fileVoice').addEventListener('change', () => {
+  const f = $('#fileVoice').files[0];
+  if (f) handleFile(f, $('#f_voice'), $('#fvVoice'));
+});
+
+/* ═══ লোড: খসড়া নাইলে ডিফল্ট ═══ */
+function loadAll(){
+  let d = null;
+  try { d = JSON.parse(localStorage.getItem('wm_editor2') || 'null'); } catch(e){}
+  const v = (id, key) => { $(id).value = (d && d[key] != null) ? d[key] : DEF[key]; };
+  v('#f_herName','herName'); v('#f_yourName','yourName'); v('#f_rel','rel'); v('#f_bday','bday');
+  v('#f_q','q'); v('#f_ans','ans'); v('#f_hint','hint'); v('#f_wrong','wrong');
+  v('#f_ltitle','ltitle'); v('#f_letter','letter'); v('#f_voice','voice');
+  v('#f_cmsg','cmsg'); v('#f_candles','candles'); v('#f_wish','wish');
+  v('#f_llT','llT'); v('#f_llX','llX'); v('#f_llS','llS');
+  v('#f_stars','stars'); v('#f_greet','greet'); v('#f_final','final');
+  v('#f_myPic','myPic'); v('#f_herPic','herPic');
+  $('#f_candles').value = (d && d.candles) || DEF.candles;
+  const cd = (d && d.cd) || 1;
+  const r = document.querySelector('input[name=cd][value="'+cd+'"]'); if (r) r.checked = true;
+  const cards = (d && d.cards) || DEF.cards;
+  cards.forEach(addCard);
+  const songs = (d && d.songs) || [];
+  songs.forEach(addSong);
+  if (!songs.length) addSong(null);
+  const gal = (d && d.gal) || DEF.gal;
+  gal.forEach(addGal);
+}
+loadAll();
+
+ $('#addCard').addEventListener('click', () => addCard(null));
+ $('#addSong').addEventListener('click', () => addSong(null));
+ $('#addGal').addEventListener('click', () => addGal(null));
+ $('#resetBtn').addEventListener('click', () => {
+  if (confirm('সব এডিট মুছে ডিফল্টে ফিরে যাবে?')){
+    localStorage.removeItem('wm_editor2');
+    location.reload();
+  }
+});
+
+setInterval(() => { try{ localStorage.setItem('wm_editor2', JSON.stringify(collect())); }catch(e){} }, 3000);
+
+function collect(){
+  const cards = [...$$('#cardList .item')].map(it => ({
+    t: it.querySelector('.c_t').value.trim(),
+    x: it.querySelector('.c_x').value.trim(),
+    f: it.querySelector('.c_f').value, a: it.querySelector('.c_a').value, l: it.querySelector('.c_l').value
+  })).filter(c => c.t || c.x);
+  const songs = [...$$('#songList .item')].map(it => ({
+    name: it.querySelector('.s_n').value.trim(),
+    url: it.querySelector('.s_u').dataset.file || it.querySelector('.s_u').value.trim()
+  })).filter(s => s.url);
+  const gal = [...$$('#galList .item')].map(it => ({
+    url: it.querySelector('.g_u').dataset.file || it.querySelector('.g_u').value.trim(),
+    caption: it.querySelector('.g_c').value.trim()
+  })).filter(g => g.url);
+  return {
+    herName: $('#f_herName').value.trim(), yourName: $('#f_yourName').value.trim(),
+    rel: $('#f_rel').value.trim(), bday: $('#f_bday').value.trim(),
+    q: $('#f_q').value.trim(), ans: $('#f_ans').value.trim(), hint: $('#f_hint').value.trim(),
+    wrong: $('#f_wrong').value, ltitle: $('#f_ltitle').value.trim(), letter: $('#f_letter').value,
+    voice: $('#f_voice').dataset.file || $('#f_voice').value.trim(),
+    cmsg: $('#f_cmsg').value.trim(), candles: parseInt($('#f_candles').value) || 6,
+    wish: $('#f_wish').value.trim(),
+    llT: $('#f_llT').value.trim(), llX: $('#f_llX').value, llS: $('#f_llS').value.trim(),
+    stars: $('#f_stars').value, greet: $('#f_greet').value.trim(),
+    myPic: $('#f_myPic').value.trim(), herPic: $('#f_herPic').value.trim(),
+    final: $('#f_final').value,
+    cd: (document.querySelector('input[name=cd]:checked') || {value:1}).value,
+    cards, songs, gal
+  };
+}
+
+function buildOut(){
+  const d = collect();
+  const out = {};
+  if (d.herName) out.herName = d.herName;
+  if (d.yourName) out.yourName = d.yourName;
+  if (d.rel) out.relationshipStart = d.rel;
+  if (d.bday) out.birthday = d.bday;
+  if (d.q) out.secretQuestion = d.q;
+  if (d.ans) out.secretAnswers = d.ans.split(',').map(s => s.trim()).filter(Boolean);
+  if (d.hint) out.hint = d.hint;
+  if (d.wrong) out.wrongLines = d.wrong.split('\n').map(s => s.trim()).filter(Boolean);
+  if (d.ltitle) out.letterTitle = d.ltitle;
+  if (d.letter) out.letterText = d.letter;
+  if (d.voice) out.voiceUrl = d.voice;
+  if (d.cmsg) out.cakeMessage = d.cmsg;
+  out.candleCount = d.candles;
+  out.cakeDesign = parseInt(d.cd) || 1;
+  if (d.wish) out.wishCardMsg = d.wish;
+  if (d.llT) out.loveTeaser = d.llT;
+  if (d.llX) out.loveText = d.llX;
+  if (d.llS) out.loveSign = d.llS;
+  if (d.cards.length) out.cards = d.cards;
+  if (d.songs.length) out.songs = d.songs;
+  if (d.gal.length) out.gallery = d.gal;
+  if (d.stars) out.starMessages = d.stars.split('\n').map(s => s.trim()).filter(Boolean);
+  if (d.greet) out.chatGreet = d.greet;
+  if (d.myPic) out.chatMyPic = d.myPic;
+  if (d.herPic) out.chatHerPic = d.herPic;
+  if (d.final) out.finalMsg = d.final;
+  return {d, out};
+}
+
+/* 👁️ রিভিউ */
+ $('#prevBtn').addEventListener('click', () => {
+  const {out} = buildOut();
+  try{ localStorage.setItem('wm_preview', JSON.stringify(out)); }catch(e){}
+  vibrate(30);
+  window.open('index.html', '_blank');
+});
+
+/* 🔗 লিংক */
+let lastLink = '';
+ $('#makeBtn').addEventListener('click', () => {
+  const {out} = buildOut();
+  const hasFiles = JSON.stringify(out).includes('data:');
+  const b64 = utf8ToB64(JSON.stringify(out));
+  const viewer = location.href.replace(/editor\.html.*$/i, 'index.html');
+  lastLink = viewer + '#d=' + b64;
+  $('#linkBox').textContent = lastLink;
+  $('#result').style.display = 'block';
+  $('#result').scrollIntoView({behavior:'smooth'});
+  vibrate(30);
+  if (hasFiles) alert('তুমি ফাইল (গান/ছবি/ভয়েস) দিয়েছো — লিংকে সেগুলো খুব ভারী হয়ে যায়।\nফাইলসহ পাঠাতে চাইলে "📥 ফাইল" বাটন ব্যবহার করো।');
+});
+
+ $('#copyBtn').addEventListener('click', async () => {
+  if (!lastLink) return;
+  try{ await navigator.clipboard.writeText(lastLink); }
+  catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = lastLink; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); ta.remove();
+  }
+  $('#copyBtn').textContent = '✅ কপি হয়েছে!';
+  setTimeout(() => $('#copyBtn').textContent = '📋 কপি', 2000);
+});
+ $('#waBtn').addEventListener('click', () => {
+  if (!lastLink) return;
+  window.open('https://wa.me/?text=' + encodeURIComponent('তোমার জন্য একটা সারপ্রাইজ আছে 🤍\nএই লিংকটা খোলো:\n' + lastLink), '_blank');
+});
+
+/* 📥 ফাইল (সবকিছুসহ — সরাসরি WhatsApp-এ পাঠাও) */
+ $('#dlBtn').addEventListener('click', async () => {
+  const {out} = buildOut();
+  let html;
+  try{
+    const res = await fetch('index.html');
+    if (!res.ok) throw new Error('no');
+    html = await res.text();
+  }catch(e){
+    alert('ফাইল বানাতে Acode-এ ▶ Run চেপে editor.html খুলে থাকো (http দরকার)। নাহলে হোস্ট করার পর কাজ করবে।');
+    return;
+  }
+  const json = JSON.stringify(out).replace(/</g, '\\u003c');
+  const inject = '<script>window.__CONFIG = ' + json + ';</scr' + 'ipt>\n';
+  html = html.replace('<script>', inject + '<script>');
+  const blob = new Blob([html], {type: 'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'তোমার-জন্য.html';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  vibrate(30);
+  alert('ফাইল ডাউনলোড হচ্ছে — এই ফাইলটাই WhatsApp-এ সরাসরি পাঠিয়ে দাও। সে খুললেই সব দেখতে পাবে 🤍');
+});
+</script>
+</body>
+</html>
