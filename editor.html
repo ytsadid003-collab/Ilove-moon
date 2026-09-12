@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>🛠️ এডিটর</title>
+<title>🛠️ এডিটর v7</title>
 <link href="https://fonts.googleapis.com/css2?family=Galada&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
@@ -129,7 +129,7 @@ input:focus,textarea:focus,select:focus{border-color:#f78fb5}
 <div class="card">
 <h2>📬 তার রিপ্লাই</h2>
 <p class="tip">লিংক পাঠানোর পর সে "রেখে দাও" চাপলে তার লেখা এখানে জমা হবে — তুমি এসে পড়ে নিও 🤍</p>
-<label>লিংক আইডি (লিংক বানালে অটো বসে যায়)</label><input id="rpId" placeholder="যেমন: 3f2a9c...">
+<label>লিংক আইডি (লিংক বানালে অটো বসে যায়)</label><input id="rpId" placeholder="যেমন: t~wmabc123">
 <button class="add" id="rpBtn">👁️ রিপ্লাই দেখো</button>
 <div id="rpOut" style="margin-top:6px"></div>
 </div>
@@ -147,6 +147,13 @@ input:focus,textarea:focus,select:focus{border-color:#f78fb5}
 const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
 function utf8ToB64(s){const b=new TextEncoder().encode(s);let r='';for(const c of b)r+=String.fromCharCode(c);return btoa(r).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
 function vib(p){try{if(navigator.vibrate)navigator.vibrate(p)}catch(e){}}
+function cfgPart(pid){const k=pid.indexOf('~');return k<0?['j',pid]:[pid.slice(0,k),pid.slice(k+1)]}
+async function cfgRead(pid){if(!pid)return null;const p=cfgPart(pid);const id=p[1];const u=p[0]==='t'?'https://textdb.dev/api/data/'+id:(p[0]==='e'?'https://api.extendsclass.com/json-storage/bin/'+id:'https://jsonblob.com/api/jsonBlob/'+id);try{const r=await fetch(u,{cache:'no-store'});if(!r.ok)return null;const t=await r.text();return JSON.parse(t)}catch(e){return null}}
+async function cloudSave(json){const tid='wm'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+try{const r=await fetch('https://textdb.dev/api/data/'+tid,{method:'POST',body:json});if(r.ok)return't~'+tid}catch(e){}
+try{const r=await fetch('https://jsonblob.com/api/jsonBlob',{method:'POST',headers:{'Content-Type':'application/json'},body:json});if(r.ok){const loc=r.headers.get('Location')||r.headers.get('location');if(loc)return'j~'+loc.split('/').pop()}}catch(e){}
+try{const r=await fetch('https://api.extendsclass.com/json-storage/bin',{method:'POST',headers:{'Content-Type':'application/json'},body:json});if(r.ok){const j=await r.json();if(j&&j.id)return'e~'+j.id}}catch(e){}
+return null}
 const DEF={
 herName:'মিস পাগলি',yourName:'সাইদ',rel:'2025-03-15',bday:'',
 q:'আমি তোমাকে কোন নামে ডাকি?',ans:'পাগলি, পাগলী, pagli, জান',
@@ -181,11 +188,13 @@ function collect(){const cards=[...$$('#cardList .item')].map(it=>({t:it.querySe
 function buildOut(){const d=collect();const o={};if(d.herName)o.herName=d.herName;if(d.yourName)o.yourName=d.yourName;if(d.rel)o.relationshipStart=d.rel;if(d.bday)o.birthday=d.bday;if(d.q)o.secretQuestion=d.q;if(d.ans)o.secretAnswers=d.ans.split(',').map(s=>s.trim()).filter(Boolean);if(d.hint)o.hint=d.hint;if(d.wrong)o.wrongLines=d.wrong.split('\n').map(s=>s.trim()).filter(Boolean);if(d.ltitle)o.letterTitle=d.ltitle;if(d.letter)o.letterText=d.letter;if(d.lanim)o.letterAnim=d.lanim;if(d.voice)o.voiceUrl=d.voice;if(d.music)o.musicUrl=d.music;if(d.cmsg)o.cakeMessage=d.cmsg;o.candleCount=d.candles;o.cakeDesign=parseInt(d.cd)||1;if(d.wish)o.wishCardMsg=d.wish;if(d.llT)o.loveTeaser=d.llT;if(d.llX)o.loveText=d.llX;if(d.llS)o.loveSign=d.llS;if(d.cards.length)o.cards=d.cards;if(d.songs.length)o.songs=d.songs;if(d.gal.length)o.gallery=d.gal;if(d.stars)o.starMessages=d.stars.split('\n').map(s=>s.trim()).filter(Boolean);if(d.chatName)o.chatDisplayName=d.chatName;if(d.greet)o.chatGreet=d.greet;if(d.myPic)o.chatMyPic=d.myPic;if(d.herPic)o.chatHerPic=d.herPic;if(d.final)o.finalMsg=d.final;return{d,o}}
  $('#prevBtn').onclick=()=>{const{o}=buildOut();try{localStorage.setItem('wm_preview',JSON.stringify(o))}catch(e){}vib(30);window.open('index.html','_blank')};
 let ll='';
- $('#makeBtn').onclick=async()=>{const{o}=buildOut();const json=JSON.stringify(o);const base=location.href.replace(/editor\.html.*$/i,'index.html');let link=null,stat='';$('#makeBtn').textContent='⏳ বানাচ্ছি...';try{if(json.length<950000){const r=await fetch('https://jsonblob.com/api/jsonBlob',{method:'POST',headers:{'Content-Type':'application/json'},body:json});if(r.ok){const loc=r.headers.get('Location')||r.headers.get('location');if(loc){const id=loc.split('/').pop();link=base+'#i='+id;stat='✅ ছোট লিংক তৈরি — যেকোনো জায়গায় শেয়ার করো';try{localStorage.setItem('wm_lastBlob',id)}catch(e){}$('#rpId').value=id}}}}catch(e){}if(!link){link=base+'#d='+utf8ToB64(json);stat=json.length>400000?'⚠️ কনটেন্ট বড় হওয়ায় ক্লাউডে যায়নি। ছবি/গান GitHub রিপোতে রেখে লিংক দিলে লিংক ছোট হবে':'⚠️ ক্লাউড ফেল করেছে — পুরনো পদ্ধতিতে লিংক বানানো হলো'}ll=link;$('#linkStat').textContent=stat;$('#linkBox').textContent=ll;$('#result').style.display='block';$('#result').scrollIntoView({behavior:'smooth'});$('#makeBtn').textContent='🔗 লিংক';vib(30)};
+ $('#makeBtn').onclick=async()=>{const{o}=buildOut();const json=JSON.stringify(o);const base=location.href.replace(/editor\.html.*$/i,'index.html');$('#makeBtn').textContent='⏳ বানাচ্ছি...';let pid=null;try{if(json.length<950000)pid=await cloudSave(json)}catch(e){}
+let link,stat;if(pid){link=base+'#i='+pid;stat='✅ একদম ছোট লিংক তৈরি — কপি/WhatsApp/QR সব কাজ করবে';try{localStorage.setItem('wm_lastBlob',pid)}catch(e){}$('#rpId').value=pid}else{link=base+'#d='+utf8ToB64(json);stat='⚠️ ৩টা ক্লাউড সার্ভারই সাড়া দেয়নি — নেট দেখে আবার 🔗 চাপো (এই লিংক বড়, QR নাও চলতে পারে)'}
+ll=link;$('#linkStat').textContent=stat;$('#linkBox').textContent=ll;$('#result').style.display='block';$('#result').scrollIntoView({behavior:'smooth'});$('#makeBtn').textContent='🔗 লিংক';vib(30)};
  $('#copyBtn').onclick=async()=>{if(!ll)return;try{await navigator.clipboard.writeText(ll)}catch(e){const t=document.createElement('textarea');t.value=ll;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove()}$('#copyBtn').textContent='✅ কপি!';setTimeout(()=>$('#copyBtn').textContent='📋 কপি',2000)};
  $('#waBtn').onclick=()=>{if(!ll)return;window.open('https://wa.me/?text='+encodeURIComponent('তোমার জন্য একটা সারপ্রাইজ 🤍\n'+ll),'_blank')};
  $('#qrBtn').onclick=()=>{if(!ll)return;const qb=$('#qrBox');if(qb.style.display==='block'){qb.style.display='none';return}qb.innerHTML='<p>স্ক্যান করলেই সাইট খুলবে 🤍</p>';try{new QRCode(qb,{text:ll,width:210,height:210,colorDark:'#5c4450',colorLight:'#ffffff'});qb.style.display='block'}catch(e){qb.innerHTML='<p>QR বানানো যায়নি — নেট চেক করো</p>';qb.style.display='block'}};
- $('#rpBtn').onclick=async()=>{const id=$('#rpId').value.trim();const out=$('#rpOut');if(!id){out.textContent='আগে 🔗 লিংক বানাও — তারপর এখানে রিপ্লাই আসবে';return}out.textContent='দেখছি...';try{const r=await fetch('https://jsonblob.com/api/jsonBlob/'+id,{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json();const arr=j._replies||[];if(!arr.length){out.textContent='এখনো কোনো রিপ্লাই নেই 🤍';return}out.innerHTML='';arr.slice().reverse().forEach(x=>{const d=document.createElement('div');d.className='rp-item';const tm=document.createElement('span');tm.className='rp-time';tm.textContent=x.at||'';const tx=document.createElement('p');tx.textContent=x.t||'';d.append(tm,tx);out.appendChild(d)})}catch(e){out.textContent='লোড করা গেল না — নেট চেক করো'}};
+ $('#rpBtn').onclick=async()=>{const pid=$('#rpId').value.trim();const out=$('#rpOut');if(!pid){out.textContent='আগে 🔗 লিংক বানাও — তারপর এখানে রিপ্লাই আসবে';return}out.textContent='দেখছি...';const j=await cfgRead(pid);if(!j){out.textContent='লোড করা গেল না — নেট চেক করো';return}const arr=j._replies||[];if(!arr.length){out.textContent='এখনো কোনো রিপ্লাই নেই 🤍';return}out.innerHTML='';arr.slice().reverse().forEach(x=>{const d=document.createElement('div');d.className='rp-item';const tm=document.createElement('span');tm.className='rp-time';tm.textContent=x.at||'';const tx=document.createElement('p');tx.textContent=x.t||'';d.append(tm,tx);out.appendChild(d)})};
  $('#dlBtn').onclick=async()=>{const{o}=buildOut();let html;try{const r=await fetch('index.html');if(!r.ok)throw 0;html=await r.text()}catch(e){alert('Acode-এ ▶ Run করে editor.html খুলে থাকো।');return}const j=JSON.stringify(o).replace(/</g,'\\u003c');html=html.replace('<script>','<script>window.__CONFIG='+j+';</scr'+'ipt>\n<script>');const b=new Blob([html],{type:'text/html'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='tomar-jonno.html';document.body.appendChild(a);a.click();a.remove();vib(30)};
 </script>
 </body>
