@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>🛠️ এডিটর v7</title>
+<title>🛠️ এডিটর v8</title>
 <link href="https://fonts.googleapis.com/css2?family=Galada&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
@@ -101,7 +101,7 @@ input:focus,textarea:focus,select:focus{border-color:#f78fb5}
 </div>
 <div class="card">
 <h2>৮. গ্যালারি</h2>
-<p class="tip">💡 টিপস: ছবি GitHub রিপোতে আপলোড করে ওই লিংক দিলে শেয়ার লিংক ছোট ও স্থায়ী হয়। ফোন থেকে আপলোড করলে ছবি অটো ছোট হয়ে সেভ হয়।</p>
+<p class="tip">💡 টিপস: ছবি postimages থেকে Direct link (i.postimg.cc দিয়ে শুরু) দিলে শেয়ার লিংক ছোট থাকে।</p>
 <div id="galList"></div>
 <button class="add" id="addGal">➕ নতুন ছবি</button>
 </div>
@@ -127,9 +127,16 @@ input:focus,textarea:focus,select:focus{border-color:#f78fb5}
 <textarea id="f_final" rows="4"></textarea>
 </div>
 <div class="card">
+<h2>🔑 GitHub টোকেন — ছোট লিংকের চাবি</h2>
+<p class="tip">ধাপ: github.com → Settings → একদম নিচে Developer settings → Personal access tokens → Fine-grained tokens → Generate new token → Repository access: "Only select repositories" → Ilove-moon → Permissions → Contents: "Read and write" → Generate → টোকেন কপি করে নিচে পেস্ট। একবারই করতে হবে — টোকেন শুধু তোমার ফোনেই থাকবে।</p>
+<label>টোকেন (github_pat_... দিয়ে শুরু)</label><input id="f_ghToken" placeholder="github_pat_...">
+<button class="add" id="ghSaveBtn">💾 টোকেন সেভ করো</button>
+<div class="fv" id="fvGh"></div>
+</div>
+<div class="card">
 <h2>📬 তার রিপ্লাই</h2>
 <p class="tip">লিংক পাঠানোর পর সে "রেখে দাও" চাপলে তার লেখা এখানে জমা হবে — তুমি এসে পড়ে নিও 🤍</p>
-<label>লিংক আইডি (লিংক বানালে অটো বসে যায়)</label><input id="rpId" placeholder="যেমন: t~wmabc123">
+<label>লিংক আইডি (লিংক বানালে অটো বসে যায়)</label><input id="rpId" placeholder="অটো বসবে">
 <button class="add" id="rpBtn">👁️ রিপ্লাই দেখো</button>
 <div id="rpOut" style="margin-top:6px"></div>
 </div>
@@ -146,14 +153,23 @@ input:focus,textarea:focus,select:focus{border-color:#f78fb5}
 // @ts-nocheck
 const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
 function utf8ToB64(s){const b=new TextEncoder().encode(s);let r='';for(const c of b)r+=String.fromCharCode(c);return btoa(r).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+const ghB64=s=>btoa(unescape(encodeURIComponent(s)));
 function vib(p){try{if(navigator.vibrate)navigator.vibrate(p)}catch(e){}}
 function cfgPart(pid){const k=pid.indexOf('~');return k<0?['j',pid]:[pid.slice(0,k),pid.slice(k+1)]}
-async function cfgRead(pid){if(!pid)return null;const p=cfgPart(pid);const id=p[1];const u=p[0]==='t'?'https://textdb.dev/api/data/'+id:(p[0]==='e'?'https://api.extendsclass.com/json-storage/bin/'+id:'https://jsonblob.com/api/jsonBlob/'+id);try{const r=await fetch(u,{cache:'no-store'});if(!r.ok)return null;const t=await r.text();return JSON.parse(t)}catch(e){return null}}
+async function cfgRead(pid){if(!pid||pid==='gh')return null;const p=cfgPart(pid);const id=p[1];const u=p[0]==='t'?'https://textdb.dev/api/data/'+id:(p[0]==='e'?'https://api.extendsclass.com/json-storage/bin/'+id:'https://jsonblob.com/api/jsonBlob/'+id);try{const r=await fetch(u,{cache:'no-store'});if(!r.ok)return null;return JSON.parse(await r.text())}catch(e){return null}}
 async function cloudSave(json){const tid='wm'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 try{const r=await fetch('https://textdb.dev/api/data/'+tid,{method:'POST',body:json});if(r.ok)return't~'+tid}catch(e){}
 try{const r=await fetch('https://jsonblob.com/api/jsonBlob',{method:'POST',headers:{'Content-Type':'application/json'},body:json});if(r.ok){const loc=r.headers.get('Location')||r.headers.get('location');if(loc)return'j~'+loc.split('/').pop()}}catch(e){}
 try{const r=await fetch('https://api.extendsclass.com/json-storage/bin',{method:'POST',headers:{'Content-Type':'application/json'},body:json});if(r.ok){const j=await r.json();if(j&&j.id)return'e~'+j.id}}catch(e){}
 return null}
+function ghInfo(){const host=location.hostname;const owner=host.split('.')[0];const segs=location.pathname.split('/').filter(Boolean);let repo=owner;if(segs.length&&!/\.x?html?$/.test(segs[0]))repo=segs[0];return{owner:owner,repo:repo}}
+async function ghSave(json){const t=localStorage.getItem('wm_gh_token')||'';if(!t)return null;const g=ghInfo();const api='https://api.github.com/repos/'+g.owner+'/'+g.repo+'/contents/data.json';const H={'Authorization':'Bearer '+t,'Accept':'application/vnd.github+json'};let sha=null;
+try{const r=await fetch(api,{headers:H,cache:'no-store'});if(r.status===200)sha=(await r.json()).sha;else if(r.status!==404)throw new Error('gh'+r.status)}catch(e){if(String(e.message||'').indexOf('gh')===0)throw e;throw new Error('ghNet')}
+const body={message:'data update',content:ghB64(json)};if(sha)body.sha=sha;
+let r;try{r=await fetch(api,{method:'PUT',headers:Object.assign({'Content-Type':'application/json'},H),body:JSON.stringify(body)})}catch(e){throw new Error('ghNet')}
+if(!r.ok)throw new Error('gh'+r.status);return'gh'}
+async function ghRead(){const g=ghInfo();for(const br of['main','master']){try{const r=await fetch('https://raw.githubusercontent.com/'+g.owner+'/'+g.repo+'/'+br+'/data.json?t='+Date.now(),{cache:'no-store'});if(r.ok)return JSON.parse(await r.text())}catch(e){}}return null}
+function ghErrText(e){if(e==='gh401')return'টোকেন ভুল বা মেয়াদ শেষ';if(e==='gh403')return'টোকেনে Contents "Read and write" পারমিশন নেই';if(e==='gh404')return'রিপো পাওয়া যায়নি';if(e==='ghNet')return'GitHub এ পৌঁছানো যায়নি';return'সমস্যা'}
 const DEF={
 herName:'মিস পাগলি',yourName:'সাইদ',rel:'2025-03-15',bday:'',
 q:'আমি তোমাকে কোন নামে ডাকি?',ans:'পাগলি, পাগলী, pagli, জান',
@@ -180,7 +196,9 @@ function handleImage(f,inp,vw){if(!f)return;const r=new FileReader();r.onload=()
  $('#fileVoice').addEventListener('change',e=>{const f=e.target.files[0];if(f)handleFile(f,$('#f_voice'),$('#fvVoice'))});
  $('#fileMyPic').addEventListener('change',e=>{const f=e.target.files[0];if(f)handleImage(f,$('#f_myPic'),$('#fvMyPic'))});
  $('#fileHerPic').addEventListener('change',e=>{const f=e.target.files[0];if(f)handleImage(f,$('#f_herPic'),$('#fvHerPic'))});
-function loadAll(){let d=null;try{d=JSON.parse(localStorage.getItem('wm_ed4')||'null')}catch(e){}const v=(id,k)=>{$(id).value=(d&&d[k]!=null)?d[k]:DEF[k]};v('#f_herName','herName');v('#f_yourName','yourName');v('#f_rel','rel');v('#f_bday','bday');v('#f_q','q');v('#f_ans','ans');v('#f_hint','hint');v('#f_wrong','wrong');v('#f_ltitle','ltitle');v('#f_letter','letter');v('#f_voice','voice');v('#f_music','music');v('#f_cmsg','cmsg');v('#f_wish','wish');v('#f_llT','llT');v('#f_llX','llX');v('#f_llS','llS');v('#f_stars','stars');v('#f_greet','greet');v('#f_final','final');v('#f_myPic','myPic');v('#f_herPic','herPic');v('#f_chatName','chatName');$('#f_lanim').value=(d&&d.lanim)||DEF.lanim;$('#f_candles').value=(d&&d.candles)||DEF.candles;const cd=(d&&d.cd)||1;const r=document.querySelector('input[name=cd][value="'+cd+'"]');if(r)r.checked=true;const cards=(d&&d.cards)||DEF.cards;cards.forEach(addCard);const songs=(d&&d.songs)||[];songs.forEach(addSong);if(!songs.length)addSong(null);let gal=(d&&d.gal)?d.gal.filter(g=>g.url&&!/picsum\.photos/.test(g.url)):[];if(!gal.length)gal=DEF.gal.map(g=>({url:'',caption:g.caption}));gal.forEach(addGal);try{const lbId=localStorage.getItem('wm_lastBlob');if(lbId)$('#rpId').value=lbId}catch(e){}}
+const tokEl=$('#f_ghToken');try{tokEl.value=localStorage.getItem('wm_gh_token')||''}catch(e){}
+ $('#ghSaveBtn').onclick=()=>{const v=tokEl.value.trim();if(!v){$('#fvGh').textContent='টোকেন পেস্ট করো';return}try{localStorage.setItem('wm_gh_token',v);$('#fvGh').textContent='✅ টোকেন সেভ হয়েছে — এবার 🔗 লিংক চাপো'}catch(e){$('#fvGh').textContent='সেভ হয়নি'}};
+function loadAll(){let d=null;try{d=JSON.parse(localStorage.getItem('wm_ed4')||'null')}catch(e){}const v=(id,k)=>{$(id).value=(d&&d[k]!=null)?d[k]:DEF[k]};v('#f_herName','herName');v('#f_yourName','yourName');v('#f_rel','rel');v('#f_bday','bday');v('#f_q','q');v('#f_ans','ans');v('#f_hint','hint');v('#f_wrong','wrong');v('#f_ltitle','ltitle');v('#f_letter','letter');v('#f_voice','voice');v('#f_music','music');v('#f_cmsg','cmsg');v('#f_wish','wish');v('#f_llT','llT');v('#f_llX','llX');v('#f_llS','llS');v('#f_stars','stars');v('#f_greet','greet');v('#f_final','final');v('#f_myPic','myPic');v('#f_herPic','herPic');v('#f_chatName','chatName');$('#f_lanim').value=(d&&d.lanim)||DEF.lanim;$('#f_candles').value=(d&&d.candles)||DEF.candles;const cd=(d&&d.cd)||1;const r=document.querySelector('input[name=cd][value="'+cd+'"]');if(r)r.checked=true;const cards=(d&&d.cards)||DEF.cards;cards.forEach(addCard);const songs=(d&&d.songs)||[];songs.forEach(addSong);if(!songs.length)addSong(null);let gal=(d&&d.gal)?d.gal.filter(g=>g.url&&!/picsum\.photos/.test(g.url)):[];if(!gal.length)gal=DEF.gal.map(g=>({url:'',caption:g.caption}));gal.forEach(addGal)}
 loadAll();
  $('#addCard').onclick=()=>addCard(null);$('#addSong').onclick=()=>addSong(null);$('#addGal').onclick=()=>addGal(null);
 setInterval(()=>{try{localStorage.setItem('wm_ed4',JSON.stringify(collect()))}catch(e){}},3000);
@@ -188,13 +206,27 @@ function collect(){const cards=[...$$('#cardList .item')].map(it=>({t:it.querySe
 function buildOut(){const d=collect();const o={};if(d.herName)o.herName=d.herName;if(d.yourName)o.yourName=d.yourName;if(d.rel)o.relationshipStart=d.rel;if(d.bday)o.birthday=d.bday;if(d.q)o.secretQuestion=d.q;if(d.ans)o.secretAnswers=d.ans.split(',').map(s=>s.trim()).filter(Boolean);if(d.hint)o.hint=d.hint;if(d.wrong)o.wrongLines=d.wrong.split('\n').map(s=>s.trim()).filter(Boolean);if(d.ltitle)o.letterTitle=d.ltitle;if(d.letter)o.letterText=d.letter;if(d.lanim)o.letterAnim=d.lanim;if(d.voice)o.voiceUrl=d.voice;if(d.music)o.musicUrl=d.music;if(d.cmsg)o.cakeMessage=d.cmsg;o.candleCount=d.candles;o.cakeDesign=parseInt(d.cd)||1;if(d.wish)o.wishCardMsg=d.wish;if(d.llT)o.loveTeaser=d.llT;if(d.llX)o.loveText=d.llX;if(d.llS)o.loveSign=d.llS;if(d.cards.length)o.cards=d.cards;if(d.songs.length)o.songs=d.songs;if(d.gal.length)o.gallery=d.gal;if(d.stars)o.starMessages=d.stars.split('\n').map(s=>s.trim()).filter(Boolean);if(d.chatName)o.chatDisplayName=d.chatName;if(d.greet)o.chatGreet=d.greet;if(d.myPic)o.chatMyPic=d.myPic;if(d.herPic)o.chatHerPic=d.herPic;if(d.final)o.finalMsg=d.final;return{d,o}}
  $('#prevBtn').onclick=()=>{const{o}=buildOut();try{localStorage.setItem('wm_preview',JSON.stringify(o))}catch(e){}vib(30);window.open('index.html','_blank')};
 let ll='';
- $('#makeBtn').onclick=async()=>{const{o}=buildOut();const json=JSON.stringify(o);const base=location.href.replace(/editor\.html.*$/i,'index.html');$('#makeBtn').textContent='⏳ বানাচ্ছি...';let pid=null;try{if(json.length<950000)pid=await cloudSave(json)}catch(e){}
-let link,stat;if(pid){link=base+'#i='+pid;stat='✅ একদম ছোট লিংক তৈরি — কপি/WhatsApp/QR সব কাজ করবে';try{localStorage.setItem('wm_lastBlob',pid)}catch(e){}$('#rpId').value=pid}else{link=base+'#d='+utf8ToB64(json);stat='⚠️ ৩টা ক্লাউড সার্ভারই সাড়া দেয়নি — নেট দেখে আবার 🔗 চাপো (এই লিংক বড়, QR নাও চলতে পারে)'}
+ $('#makeBtn').onclick=async()=>{const{o}=buildOut();const json=JSON.stringify(o);const base=location.href.replace(/editor\.html.*$/i,'index.html');$('#makeBtn').textContent='⏳ বানাচ্ছি...';let pid=null,rb=null,ghErr='';const big=json.length>=900000;const hasTok=!!(localStorage.getItem('wm_gh_token')||'');
+if(!big){try{pid=await ghSave(json)}catch(e){ghErr=String(e.message||'x')}
+if(!pid){try{pid=await cloudSave(json)}catch(e){}}
+if(pid==='gh'){try{rb=await cloudSave(json)}catch(e){}
+if(rb){try{const j2=JSON.parse(json);j2._replyBin=rb;await ghSave(JSON.stringify(j2))}catch(e){}}}}
+else ghErr='big';
+let link,stat;
+if(pid==='gh'){link=base+'#i=gh';stat='✅ একদম ছোট লিংক — GitHub-এ সেভ হলো'+(rb?' (রিপ্লাইও চলবে)':' (রিপ্লাই ছাড়া; বাকি সব চলবে)');try{localStorage.setItem('wm_lastReply',rb||'')}catch(e){}$('#rpId').value='gh'}
+else if(pid){link=base+'#i='+pid;stat='✅ ছোট লিংক তৈরি — কপি/WhatsApp/QR কাজ করবে';try{localStorage.setItem('wm_lastBlob',pid)}catch(e){}$('#rpId').value=pid}
+else if(ghErr==='big'){link=base+'#d='+utf8ToB64(json);stat='⚠️ কনটেন্ট খুব বড় ('+(json.length/1048576).toFixed(1)+'MB) — কোনো গান/ভয়েস ফাইল হিসেবে আছে। ওগুলো লিংক দিয়ে দাও, তাহলেই ছোট লিংক হবে'}
+else if(!hasTok){link=base+'#d='+utf8ToB64(json);stat='⚠️ টোকেন সেট করা নেই আর ফ্রি ক্লাউডও ফেল — উপরের 🔑 GitHub টোকেন কার্ড দেখো'}
+else{link=base+'#d='+utf8ToB64(json);stat='⚠️ GitHub: '+ghErrText(ghErr)+' — ঠিক করে আবার 🔗 চাপো'}
 ll=link;$('#linkStat').textContent=stat;$('#linkBox').textContent=ll;$('#result').style.display='block';$('#result').scrollIntoView({behavior:'smooth'});$('#makeBtn').textContent='🔗 লিংক';vib(30)};
  $('#copyBtn').onclick=async()=>{if(!ll)return;try{await navigator.clipboard.writeText(ll)}catch(e){const t=document.createElement('textarea');t.value=ll;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove()}$('#copyBtn').textContent='✅ কপি!';setTimeout(()=>$('#copyBtn').textContent='📋 কপি',2000)};
  $('#waBtn').onclick=()=>{if(!ll)return;window.open('https://wa.me/?text='+encodeURIComponent('তোমার জন্য একটা সারপ্রাইজ 🤍\n'+ll),'_blank')};
  $('#qrBtn').onclick=()=>{if(!ll)return;const qb=$('#qrBox');if(qb.style.display==='block'){qb.style.display='none';return}qb.innerHTML='<p>স্ক্যান করলেই সাইট খুলবে 🤍</p>';try{new QRCode(qb,{text:ll,width:210,height:210,colorDark:'#5c4450',colorLight:'#ffffff'});qb.style.display='block'}catch(e){qb.innerHTML='<p>QR বানানো যায়নি — নেট চেক করো</p>';qb.style.display='block'}};
- $('#rpBtn').onclick=async()=>{const pid=$('#rpId').value.trim();const out=$('#rpOut');if(!pid){out.textContent='আগে 🔗 লিংক বানাও — তারপর এখানে রিপ্লাই আসবে';return}out.textContent='দেখছি...';const j=await cfgRead(pid);if(!j){out.textContent='লোড করা গেল না — নেট চেক করো';return}const arr=j._replies||[];if(!arr.length){out.textContent='এখনো কোনো রিপ্লাই নেই 🤍';return}out.innerHTML='';arr.slice().reverse().forEach(x=>{const d=document.createElement('div');d.className='rp-item';const tm=document.createElement('span');tm.className='rp-time';tm.textContent=x.at||'';const tx=document.createElement('p');tx.textContent=x.t||'';d.append(tm,tx);out.appendChild(d)})};
+ $('#rpBtn').onclick=async()=>{let id=$('#rpId').value.trim();const out=$('#rpOut');try{
+if(!id||id==='gh'){const lr=localStorage.getItem('wm_lastReply');let j=null;if(id==='gh'){j=await ghRead()}else if(lr){j=await cfgRead(lr)}
+if(j&&j._replyBin)id=j._replyBin;else if(lr&&lr.indexOf('~')>0)id=lr}
+if(!id||id==='gh'){out.textContent='রিপ্লাই সার্ভার নেই — এই লিংকে রিপ্লাই জমা হয়নি 🤍';return}
+out.textContent='দেখছি...';const j=await cfgRead(id);if(!j){out.textContent='লোড করা গেল না — নেট চেক করো';return}const arr=j._replies||[];if(!arr.length){out.textContent='এখনো কোনো রিপ্লাই নেই 🤍';return}out.innerHTML='';arr.slice().reverse().forEach(x=>{const d=document.createElement('div');d.className='rp-item';const tm=document.createElement('span');tm.className='rp-time';tm.textContent=x.at||'';const tx=document.createElement('p');tx.textContent=x.t||'';d.append(tm,tx);out.appendChild(d)})}catch(e){out.textContent='লোড করা গেল না — নেট চেক করো'}};
  $('#dlBtn').onclick=async()=>{const{o}=buildOut();let html;try{const r=await fetch('index.html');if(!r.ok)throw 0;html=await r.text()}catch(e){alert('Acode-এ ▶ Run করে editor.html খুলে থাকো।');return}const j=JSON.stringify(o).replace(/</g,'\\u003c');html=html.replace('<script>','<script>window.__CONFIG='+j+';</scr'+'ipt>\n<script>');const b=new Blob([html],{type:'text/html'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='tomar-jonno.html';document.body.appendChild(a);a.click();a.remove();vib(30)};
 </script>
 </body>
